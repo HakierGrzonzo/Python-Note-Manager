@@ -1,5 +1,6 @@
-import curses, json, operator
+import curses, json, operator, os
 import FileStrucHandler as Files
+import datetime
 
 
 
@@ -34,16 +35,30 @@ def deinit(con):
 	curses.echo()
 	curses.endwin()
 
-def getInput(con, posX, posY):
-	string = str()
+def getInput(con, posX, posY, normal = None):
+	curses.curs_set(1)
+	con.keypad(True)
+
+	if not normal == None:
+		string = normal
+		con.addstr(posY, posX, string)
+		con.refresh()
+	else:
+		string = str()
+
+	
+	"""
 	while True:
-		chra = con.getkey()
-		if chra =='\n':
+		chra = con.getch()
+		if chr(chra) =='\n':
 			break
 		else:
-			string = string + str(chra)
+			string = string + chr(chra)
 			con.addstr(posY, posX, string)
 			con.refresh()
+	"""
+	con.keypad(False)
+	curses.curs_set(0)
 	return string
 
 def GetChar(con, keys):
@@ -130,19 +145,63 @@ def settingsUI(con, perferences):
 		con.getkey()
 		break		
 
+def selector(con, arr):
+	con.keypad(True)
+	select = 0
+	while True:
+		con.clear()
+		y = 0
+		for item in arr:
+			if y == select:
+				con.addstr(y, 0, item, curses.A_REVERSE)
+			else:
+				con.addstr(y,0,item)
+			y = y + 1
+
+		con.refresh()
+		chra = con.getch()
+
+		if chr(chra) == '\n':
+			break
+		elif chra == curses.KEY_UP:
+			if not select == 0:
+				select = select - 1
+		elif chra == curses.KEY_DOWN:
+			if not select == len(arr) - 1:
+				select = select + 1
+	con.keypad(False)
+	return select
+
 def openNotebook(con, book):
-	y = 0
-	maxY = con.getmaxyx()
 	con.clear()
-	con.addstr(0,0,book.properties['Title'])
+	maxY, maxX = con.getmaxyx()
+	selectcon = curses.newwin(maxY - 2, maxX, 2, 1)
+	con.addstr(0,0,'Browsing '+book.properties['Title'])
 
-	SectionPerferences = list()
-	SectionList = list()
+	arr = list()
 	for section in book.sections:
-		SectionPerferences.append(section.perferences)
-		SectionList.append(section)
+		arr.append(section.properties['Title'])
 
-	SectionPerferences.sort(key=lambda x:x['date'])
+	select = selector(selectcon, arr)
+
+
+
+def MakeBook(con, perferences):
+	def MakebookDialog(con):
+		con.clear()
+		con.addstr(1,1,'Enter Title:')
+		con.refresh()
+		Title = getInput(con, 1,2)
+		con.addstr(3,1,'Enter dir to save Notebook in:')
+		con.refresh()
+		Dir = getInput(con, 1, 4, normal = os.path.expanduser('~/PNO/' + Title))
+		return Title, Dir
+
+	date = datetime.datetime.now()
+	datestr = str(date.year) + '-' + str(date.month) + '-' + str(date.day)
+	Title, Dir = MakebookDialog(con)
+	return Files.Notebook(Dir, MakeNew = True, properties = Files.properties(Title, 'Notebook', datestr, perferences['username']))
+
 
 
 
@@ -150,7 +209,7 @@ def main(con):
 	con.clear()
 	key = MainMenu(con)
 	if key == 'n' or key == 'N':
-		pass
+		OpenBook(con, MakeBook(con, perferences))
 	elif key == 'o' or key == 'O':
 		pass
 	elif key == 'r' or key == 'R':
@@ -160,16 +219,19 @@ def main(con):
 
 
 if __name__ == '__main__':
+
 	try:
-		perferencesFile = '/home/admin/Desktop/programy/PyMen/perferences.json'
+		perferencesFile = 'perferences.json'
 		perferences = json.load(open(perferencesFile,'r'))
 		FirstTime = False
 	except Exception as e:
 		print(e)
 		FirstTime = True
-	
+
 	con = init()
-	main(con)
+
+	MakeBook(con,perferences)
+	#main(con)
 	con.getkey()
 	deinit(con)
-	print('exited correctly')
+	print(selector)

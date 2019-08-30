@@ -70,7 +70,8 @@ class SubSection(object):
 
 		except Exception as e:
 			raise e
-
+	def SortSelf(self):
+		self.pages.sort()
 	def __lt__(self, other):
 		y1, m1, d1 = [int(x) for x in self.properties['Date'].split('/')]
 		y2, m2, d2 = [int(x) for x in other.properties['Date'].split('/')] 
@@ -108,7 +109,8 @@ class Section(object):
 
 		except Exception as e:
 			raise e
-
+	def SortSelf(self):
+		self.subsections.sort()
 	def __lt__(self, other):
 		y1, m1, d1 = [int(x) for x in self.properties['Date'].split('/')]
 		y2, m2, d2 = [int(x) for x in other.properties['Date'].split('/')] 
@@ -130,7 +132,8 @@ class Notebook(object):
 		try:
 			if MakeNew:
 				self.properties = properties
-				json.dumps(self.properties, open(self.dir + 'properties.json', 'w+'))
+				file = open(self.dir + 'properties.json', 'w+')
+				json.dumps(self.properties, file)
 
 			else:
 				self.properties = json.load(open(dir+'properties.json','r'))
@@ -150,7 +153,8 @@ class Notebook(object):
 
 		except Exception as e:
 			raise e
-
+	def SortSelf(self):
+		self.sections.sort()
 	def __lt__(self, other):
 		y1, m1, d1 = [int(x) for x in self.properties['Date'].split('/')]
 		y2, m2, d2 = [int(x) for x in other.properties['Date'].split('/')] 
