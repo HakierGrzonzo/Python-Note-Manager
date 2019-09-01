@@ -18,7 +18,7 @@ class Page(object):
 		try:
 			if MakeNew:
 				self.properties = properties
-				json.dumps(self.properties, open(self.dir + 'properties.json', 'w+'))
+				json.dump(self.properties, open(self.dir + 'properties.json', 'w+'))
 
 			else:
 				self.properties = json.load(open(dir+'properties.json','r'))
@@ -53,7 +53,7 @@ class SubSection(object):
 		try:
 			if MakeNew:
 				self.properties = properties
-				json.dumps(self.properties, open(self.dir + 'properties.json', 'w+'))
+				json.dump(self.properties, open(self.dir + 'properties.json', 'w+'))
 
 			else:
 				self.properties = json.load(open(dir+'properties.json','r'))
@@ -89,7 +89,7 @@ class Section(object):
 		try:
 			if MakeNew:
 				self.properties = properties
-				json.dumps(self.properties, open(self.dir + 'properties.json', 'w+'))
+				json.dump(self.properties, open(self.dir + 'properties.json', 'w+'))
 
 			else:
 				self.properties = json.load(open(dir+'properties.json','r'))
@@ -132,8 +132,8 @@ class Notebook(object):
 		try:
 			if MakeNew:
 				self.properties = properties
-				file = open(self.dir + 'properties.json', 'w+')
-				json.dumps(self.properties, file)
+				self.file = open(self.dir + 'properties.json', 'w+')
+				json.dump(properties, self.file)
 
 			else:
 				self.properties = json.load(open(dir+'properties.json','r'))
@@ -159,6 +159,12 @@ class Notebook(object):
 		y1, m1, d1 = [int(x) for x in self.properties['Date'].split('/')]
 		y2, m2, d2 = [int(x) for x in other.properties['Date'].split('/')] 
 		return date(y1, m1, d1) < date(y2, m2, d2)
+
+	def __del__(self):
+		self.file = open(self.dir + 'properties.json', 'w+')
+		json.dump(properties, self.file)
+		self.file.close()
+		
 		
 
 def properties(Title, Type, Date, Author):
@@ -168,6 +174,7 @@ def properties(Title, Type, Date, Author):
 		"Date" : 	Date,
 		"Author" : 	Author
 	}
+	return data
 
 if __name__ == '__main__':
 	NotebookDir = '/home/admin/Desktop/zeszyt/'
