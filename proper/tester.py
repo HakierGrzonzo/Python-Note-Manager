@@ -1,8 +1,21 @@
 import FileHandler as fh
 from datetime import *
+import os
 
 author = 'HakierGrzonzo'
 currentFolder = None
+NoteDir = os.path.expanduser('~/PNO/Notebooks/')
+TemplateDir = os.path.expanduser('~/PNO/templates')
+
+def initialize():
+	try:
+		os.mkdir(NoteDir)
+	except Exception as e:
+		pass
+	try:
+		os.mkdir(TemplateDir)
+	except Exception as e:
+		pass
 
 def today():
 	date = datetime.now()
@@ -12,6 +25,16 @@ def today():
 def DoNew(command):
 	"""Syntax: new {type of folder} {title}"""
 	global currentFolder
+	global NoteDir
+
+	split = command[1].split(' ', 1)
+
+	command = [command[0], split[0], split[1]]
+
+	if command[1] == 'page':
+		path = 'page' + str(len(currentFolder.folders))
+	else:
+		path = command[2]
 
 	if not len(command) >=  3:
 		print('Invalid syntax, use: new {type of folder} {title}')
@@ -20,12 +43,9 @@ def DoNew(command):
 		properties = fh.properties(command[2], command[1], today(), author)
 
 		if currentFolder == None:
-			if command[2][0] == '/':
-				dir = command[2]
-			else:
-				dir = './' + command[2]
+			dir = NoteDir + path 
 		else:
-			dir = currentFolder.dir + '/' + command[2]
+			dir = currentFolder.dir + '/' + path
 
 		try:
 			currentFolder = fh.Folder(dir, MakeNew = True, properties = properties, parent = currentFolder)
@@ -39,16 +59,19 @@ def DoNew(command):
 		
 def DoOpen(command):
 	global currentFolder
+	global NoteDir
+
 	previousFolder = currentFolder
 	try:
 		if currentFolder == None:
-			currentFolder = fh.Folder('./' + command[1])
+			currentFolder = fh.Folder(NoteDir + command[1])
 		else:
 			currentFolder = fh.Folder(previousFolder.dir + '/' + command[1], parent = previousFolder)
 	except Exception as e:
 		currentFolder = previousFolder
 		if type(e) == FileNotFoundError:
 			print('specified object does not exist')
+			print(e)
 		else:
 			raise e
 
@@ -89,7 +112,9 @@ def DoList():
 		for file in currentFolder.files:
 			print('  ' + file)
 
-		
+def DoMake(command):
+	global currentFolder
+	fh.MakeTemplate(command[1] + '.tex', currentFolder)
 
 def main():
 	global currentFolder
@@ -97,8 +122,8 @@ def main():
 		command = input(ShellString()+': ')
 		if command == 'exit':
 			break
-		command = command.split(' ')
-		command[0].cllower
+		command = command.split(' ', 1)
+		command[0].lower
 		if command[0] == 'new':
 			DoNew(command)
 		elif command[0] == 'open':
@@ -107,12 +132,15 @@ def main():
 			currentFolder = currentFolder.parent
 		elif command[0] == 'list':
 			DoList()
+		elif command[0] == 'make':
+			DoMake(command)
 		else:
 			print('Invalid command')
 
 
 
 if __name__ == '__main__':
+	initialize()
 	print('Python Note Organizer:')
 	main()
 	print('exited succesfuly!')
