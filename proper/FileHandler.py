@@ -60,7 +60,7 @@ class Folder(object):
 		for r, d, f in os.walk(self.dir):
 			for folder in d:
 				try:
-					self.folders.append(Folder(self.dir + '/' + folder + '/'))
+					self.folders.append(Folder(self.dir + '/' + folder + '/', parent = self))
 				except:
 					raise TypeError('Could not load folder : ' + folder)
 
@@ -79,11 +79,11 @@ class Folder(object):
 		d2, m2, y2 = [int(x) for x in other.properties['Date'].split('/')] 
 		return date(y1, m1, d1) < date(y2, m2, d2)
 
-def MakeTemplate(template, folder):
+def MakeTemplate(template, folder, extension = '.md'):
 
 	templateDir = os.path.expanduser('~/PNO/templates/')
 	try:
-		templateFile = codecs.open(templateDir + template, 'r', 'utf-8')
+		templateFile = codecs.open(templateDir + template + extension, 'r', 'utf-8')
 		text = templateFile.read()
 		templateFile.close()
 		text = text.replace('<date>', today())
@@ -111,7 +111,7 @@ def MakeTemplate(template, folder):
 
 	if success == True:
 		try:
-			target = folder.dir + '/' + 'note' + '.tex'
+			target = folder.dir + '/' + 'note' + extension
 			targetFile = codecs.open(target, 'w+', 'utf-8')
 			targetFile.write(text)
 			folder.Scan()

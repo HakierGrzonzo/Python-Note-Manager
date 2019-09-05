@@ -9,6 +9,10 @@ TemplateDir = os.path.expanduser('~/PNO/templates')
 
 def initialize():
 	try:
+		os.mkdir(os.path.expanduser('~/PNO/'))
+	except Exception as e:
+		pass
+	try:
 		os.mkdir(NoteDir)
 	except Exception as e:
 		pass
@@ -61,19 +65,38 @@ def DoOpen(command):
 	global currentFolder
 	global NoteDir
 
-	previousFolder = currentFolder
 	try:
-		if currentFolder == None:
-			currentFolder = fh.Folder(NoteDir + command[1])
-		else:
-			currentFolder = fh.Folder(previousFolder.dir + '/' + command[1], parent = previousFolder)
+		number = int(command[1])
+		if not number > len(currentFolder.folders):
+			currentFolder = currentFolder.folders[number - 1]
+
 	except Exception as e:
-		currentFolder = previousFolder
-		if type(e) == FileNotFoundError:
-			print('specified object does not exist')
-			print(e)
-		else:
-			raise e
+		previousFolder = currentFolder
+		try:
+
+			if currentFolder == None:
+				currentFolder = fh.Folder(NoteDir + command[1])
+
+			else:
+
+				done = False
+				for folder in currentFolder.folders:
+					if folder.properties[title] == command[1]:
+						currentFolder = folder
+						done = True
+						break
+
+				if not done:
+					currentFolder = fh.Folder(NoteDir + currentFolder.dir + command[1], parent = previousFolder)
+
+		except Exception as e:
+			currentFolder = previousFolder
+			if type(e) == FileNotFoundError:
+				print('specified object does not exist')
+				print(e)
+			else:
+				raise e
+
 
 def getPosition():
 	global currentFolder
@@ -103,18 +126,36 @@ def ShellString():
 
 def DoList():
 	global currentFolder
+	didSth = False
+
 	if len(currentFolder.folders) > 0:
+		didSth = True
 		print('Folders: ')
+		x = 1
+
 		for folder in currentFolder.folders:
-			print('  ' + folder.properties['Title'])
+			print('  '+ str(x) + '. ' + folder.properties['Title'])
+			x = x+1
+
 	if len(currentFolder.files) > 0:
+		didSth = True
 		print('Files: ')
 		for file in currentFolder.files:
 			print('  ' + file)
 
+	if not didSth:
+		print('wow such empty')
+
 def DoMake(command):
 	global currentFolder
-	fh.MakeTemplate(command[1] + '.tex', currentFolder)
+	try:
+		command = command[1].split(' ')
+		if (len(command) > 1):
+			fh.MakeTemplate(command[0], currentFolder, extension = command[1])
+		else:
+			fh.MakeTemplate(command[0], currentFolder)
+	except Exception as e:
+		print(e)
 
 def main():
 	global currentFolder
