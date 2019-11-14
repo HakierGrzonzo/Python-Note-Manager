@@ -1,11 +1,17 @@
 import FileHandler as fh
-from datetime import *
+from datetime import datetime
 import os
+import prompt_toolkit as pt
 
 author = 'HakierGrzonzo'
 currentFolder = None
 NoteDir = os.path.expanduser('~/PNO/Notebooks/')
 TemplateDir = os.path.expanduser('~/PNO/templates')
+
+def shortText(text, limit):
+	if len(text) > limit + 4 and limit > 4:
+		text = text[:limit] + '...'
+	return text
 
 def initialize():
 	try:
@@ -14,11 +20,11 @@ def initialize():
 		pass
 	try:
 		os.mkdir(NoteDir)
-	except Exception as e:
+	except:
 		pass
 	try:
 		os.mkdir(TemplateDir)
-	except Exception as e:
+	except:
 		pass
 
 def today():
@@ -69,6 +75,8 @@ def DoOpen(command):
 		number = int(command[1])
 		if not number > len(currentFolder.folders):
 			currentFolder = currentFolder.folders[number - 1]
+			if currentFolder.properties['Type'] != 'page':
+					DoList()
 
 	except Exception as e:
 		previousFolder = currentFolder
@@ -76,12 +84,14 @@ def DoOpen(command):
 
 			if currentFolder == None:
 				currentFolder = fh.Folder(NoteDir + command[1])
+				if currentFolder.properties['Type'] != 'page':
+					DoList()
 
 			else:
 
 				done = False
 				for folder in currentFolder.folders:
-					if folder.properties[title] == command[1]:
+					if folder.properties['Title'] == command[1]:
 						currentFolder = folder
 						done = True
 						break
@@ -119,10 +129,10 @@ def ShellString():
 	if not position == None:
 		string = str()
 		for folder in position:
-			string = string + folder + '/'
-		return string
+			string += '/' + shortText(folder, 25)
+		return string + ': '
 	else:
-		return str()
+		return ': '
 
 def DoList():
 	global currentFolder
@@ -134,7 +144,7 @@ def DoList():
 		x = 1
 
 		for folder in currentFolder.folders:
-			print('  '+ str(x) + '. ' + folder.properties['Title'])
+			print('  '+ str(x) + '. ' + shortText(folder.properties['Title'], 80))
 			x = x+1
 
 	if len(currentFolder.files) > 0:
@@ -159,8 +169,9 @@ def DoMake(command):
 
 def main():
 	global currentFolder
+	session = pt.PromptSession()
 	while True:
-		command = input(ShellString()+': ')
+		command = session.prompt( ShellString() )
 		if command == 'exit':
 			break
 		command = command.split(' ', 1)

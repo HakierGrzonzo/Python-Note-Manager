@@ -1,5 +1,5 @@
 import json, os, sys, codecs
-from datetime import *
+from datetime import datetime, date
 
 
 def today(divider = '.'):
