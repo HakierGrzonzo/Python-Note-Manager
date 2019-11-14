@@ -60,7 +60,8 @@ class Folder(object):
 		for r, d, f in os.walk(self.dir):
 			for folder in d:
 				try:
-					self.folders.append(Folder(self.dir + '/' + folder + '/', parent = self))
+					if not folder == 'note.assets':
+						self.folders.append(Folder(self.dir + '/' + folder + '/', parent = self))
 				except:
 					raise TypeError('Could not load folder : ' + folder)
 
