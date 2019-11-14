@@ -2,11 +2,28 @@ import FileHandler as fh
 from datetime import datetime
 import os
 import prompt_toolkit as pt
+from fuzzyfinder import fuzzyfinder
 
 author = 'HakierGrzonzo'
 currentFolder = None
 NoteDir = os.path.expanduser('~/PNO/Notebooks/')
 TemplateDir = os.path.expanduser('~/PNO/templates')
+
+PNOkeywords = ['open', 'list', 'make', 'markdown', 'section', 'page', 'subsection', 'new', 'exit']
+
+class PNOCompleter(pt.completion.Completer):
+
+    def get_completions(self, document, complete_event):
+        global currentFolder
+        if not currentFolder == None:
+            additionalKeys = [f.properties['Title'] for f in currentFolder.folders]
+        else:
+            additionalKeys = list()
+        word_before_cursor = document.get_word_before_cursor( WORD = True)
+        matches = fuzzyfinder(word_before_cursor, [*PNOkeywords, *additionalKeys])
+        
+        for m in matches:
+            yield pt.completion.Completion(m, start_position = -len(word_before_cursor))
 
 def shortText(text, limit):
 	if len(text) > limit + 4 and limit > 4:
@@ -169,9 +186,10 @@ def DoMake(command):
 
 def main():
 	global currentFolder
+        
 	session = pt.PromptSession()
 	while True:
-		command = session.prompt( ShellString() )
+		command = session.prompt( ShellString(), completer = PNOCompleter() )
 		if command == 'exit':
 			break
 		command = command.split(' ', 1)
