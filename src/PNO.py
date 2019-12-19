@@ -1,7 +1,13 @@
 import FileHandler as fh
+import subprocess
 import prompt_toolkit as pt
 import os, datetime
+Log = list()
+def log(message):
+    global Log
+    Log.append(message)
 
+folder = None
 def getNotebook(name):
     pnoFolder = os.path.expanduser('~/PNO/')
     try:
@@ -9,6 +15,7 @@ def getNotebook(name):
     except Exception as e:
         raise e
     return root
+root = getNotebook('szkoła')
 
 def makeDirText(folder) -> str:
     menuList = list()
@@ -29,19 +36,34 @@ def makeDirText(folder) -> str:
         return 'Wow such empty...'
 
 def main():
+    global root
+    global folder
     kb = pt.key_binding.KeyBindings()
+    folder = root
 
     @kb.add('c-q')
     def exit(event):
         event.app.exit()
+    
+    @kb.add('o')
+    def open(event):
+        global folder
+        line = event.app.current_buffer.document.current_line
+        if line[0] == ' ':
+            num = int(line[1:line.find('.')])
+            if not num > len(folder.folders) + 1:
+                folder = folder.folders[num - 1]
+                event.app.current_buffer.set_document(pt.document.Document(text = makeDirText(folder)), bypass_readonly = True)
+            else:
+                num -= len(folder.folders) + 2
+                log(num)
+                os.system('xdg-open ' + os.path.join(folder.dir, folder.files[num]))
     #TODO add more keys
-    root = getNotebook('szkoła')
-
 
     text = pt.document.Document(text = makeDirText(root))
     displayer = pt.buffer.Buffer(read_only = True, multiline = True, document = text)
 
-    bottomText1 = pt.layout.controls.FormattedTextControl(text = pt.HTML('<ansigreen>c-q -> exit, #TODO </ansigreen>'))
+    bottomText1 = pt.layout.controls.FormattedTextControl(text = pt.HTML('<ansigreen>c-q -> exit, o -> open </ansigreen>'))
     aboveText1 = pt.layout.controls.FormattedTextControl(text = pt.HTML('<ansigreen>Python Note Manager v.2</ansigreen>'))
 
     root_container = pt.layout.containers.HSplit([
@@ -57,3 +79,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+    for x in Log:
+        print(x)
