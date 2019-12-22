@@ -7,6 +7,8 @@ import PNOPrompt as pno
 Log = list()
 user = 'HakierGrzonzo'
 
+
+
 def log(message):
     global Log
     Log.append(message)
@@ -29,9 +31,9 @@ root = getNotebook('szkoła')
 def newPage(name):
     global folder
     global user
-    props = fh.properties(name, 'Depracated', fh.today(), user)
+    props = fh.properties(name, 'Depracated', pno.today(), user)
     path = os.path.join(folder.dir, sanitize_filepath(name))
-    folder.folders.append(fh.Folder(path, MakeNew = True, properties = props, parent = folder))
+    folder = fh.Folder(path, MakeNew = True, properties = props, parent = folder)
 
 def makeDirText(folder) -> str:
     menuList = list()
@@ -61,9 +63,11 @@ def main():
                 pt.document.Document(text = makeDirText(folder)),
                     bypass_readonly = True)
     kb = pt.key_binding.KeyBindings()
+    globalKb = pt.key_binding.KeyBindings()
+    promptKb = pt.key_binding.KeyBindings()
     folder = root
 
-    @kb.add('c-q')
+    @globalKb.add('c-q')
     def exit(event):
         event.app.exit()
     
@@ -84,26 +88,36 @@ def main():
     def home(event):
         global folder
         global root
+        root.Scan()
         folder = root
         rerender(event)
+
     @kb.add('b')
     def back(event):
         global folder
         if not folder.parent == None:
             folder = folder.parent
+            folder.Scan()
             rerender(event)
+
     @kb.add('n')
     def new(event):
         global folder
-        name = pt.shortcuts.input_dialog(
-                title= 'Name of directory',
-                text = 'Enter the name of the new directory')
-        if len(str(name)) > 0:
-            newPage(name)
-            rerender(event)
+        event.app.layout.focus(prompt)
+
+    @promptKb.add('c-m')
+    def AcceptNew(event):
+        global folder
+        log('entered function')
+        name = event.app.current_buffer.document.current_line
+        event.app.current_buffer.set_document(pt.document.Document())
+        event.app.layout.focus(displayer)
+        newPage(name)
+        rerender(event)
 
     text = pt.document.Document(text = makeDirText(root))
     displayer = pt.buffer.Buffer(read_only = True, multiline = True, document = text)
+    prompt = pt.buffer.Buffer(multiline = False)
 
     bottomText1 = pt.layout.controls.FormattedTextControl(
             text = pt.HTML('<ansigreen>c-q -> exit, o -> open, h -> go to home dir, b -> go up a dir </ansigreen>'))
@@ -115,13 +129,15 @@ def main():
     root_container = pt.layout.containers.HSplit([
         pt.layout.containers.Window(content = aboveText1, height = 1),
         pt.layout.containers.Window(
-            content = pt.layout.controls.BufferControl(displayer)),
+            content = pt.layout.controls.BufferControl(displayer, key_bindings = kb)),
+        pt.layout.containers.Window(
+            content = pt.layout.controls.BufferControl(prompt, key_bindings = promptKb), height = 1),
         pt.layout.containers.Window(content = bottomText1, height = 1),
         pt.layout.containers.Window(content = bottomText2, height = 1)
         ])
 
     layout = pt.layout.Layout(root_container)
-    app = pt.Application(key_bindings = kb, layout = layout, full_screen = True)
+    app = pt.Application(key_bindings = globalKb, layout = layout, full_screen = True)
     app.run()
 
 
