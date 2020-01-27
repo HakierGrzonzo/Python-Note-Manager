@@ -8,15 +8,15 @@ def today(divider = '.'):
 	return datestr
 
 
-def properties(Title, Type, Date, Author): 
+def properties(Title, Type, Date, Author):
 	data = {
 		"Title":	Title,
 		"Type" :	Type,
 		"Date" :	Date,
 		"Author":	Author
-		} 
+		}
 	return data
-	
+
 
 class Folder(object):
 	"""docstring for Folder"""
@@ -77,7 +77,7 @@ class Folder(object):
 
 	def __lt__(self, other):
 		d1, m1, y1 = [int(x) for x in self.properties['Date'].split('/')]
-		d2, m2, y2 = [int(x) for x in other.properties['Date'].split('/')] 
+		d2, m2, y2 = [int(x) for x in other.properties['Date'].split('/')]
 		return date(y1, m1, d1) < date(y2, m2, d2)
 
 def MakeTemplate(template, folder, extension = '.md'):
@@ -117,6 +117,5 @@ def MakeTemplate(template, folder, extension = '.md'):
 			targetFile.write(text)
 			folder.Scan()
 			targetFile.close()
-			print('success')
 		except Exception as e:
 			raise e

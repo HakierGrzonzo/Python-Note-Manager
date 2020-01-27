@@ -14,10 +14,8 @@ def log(message):
     Log.append(message)
 
 def openFile(fname):
-    f = open('temp.txt', 'w+')
-    subprocess.Popen(('xdg-open ' + fname).split(), stdout=f, shell=False)
-    f.close()
-    
+    os.system('/bin/bash /usr/bin/xdg-open ' + fname + ' > /dev/null 2>&1')
+
 folder = None
 def getNotebook(name):
     pnoFolder = os.path.expanduser('~/PNO/')
@@ -34,6 +32,10 @@ def newPage(name):
     props = fh.properties(name, 'Depracated', pno.today(), user)
     path = os.path.join(folder.dir, sanitize_filepath(name))
     folder = fh.Folder(path, MakeNew = True, properties = props, parent = folder)
+
+def MakeTemplate(name = 'markdown'):
+    global folder
+    fh.MakeTemplate(name, folder)
 
 def makeDirText(folder) -> str:
     menuList = list()
@@ -58,7 +60,7 @@ def main():
     global root
     global folder
     def rerender(event):
-        global folder 
+        global folder
         event.app.current_buffer.set_document(
                 pt.document.Document(text = makeDirText(folder)),
                     bypass_readonly = True)
@@ -70,8 +72,8 @@ def main():
     @globalKb.add('c-q')
     def exit(event):
         event.app.exit()
-    
-    @kb.add('o')
+
+    @kb.add('c-m')
     def open(event):
         global folder
         line = event.app.current_buffer.document.current_line
@@ -82,8 +84,8 @@ def main():
                 rerender(event)
             else:
                 num -= len(folder.folders) + 2
-                openFile(os.path.join(folder.dir, folder.files[num])) 
-    
+                openFile(os.path.join(folder.dir, folder.files[num]))
+
     @kb.add('h')
     def home(event):
         global folder
@@ -100,6 +102,13 @@ def main():
             folder.Scan()
             rerender(event)
 
+    @kb.add('m')
+    def make(event):
+        global folder
+        MakeTemplate()
+        folder.Scan()
+        rerender(event)
+
     @kb.add('n')
     def new(event):
         global folder
@@ -108,19 +117,19 @@ def main():
     @promptKb.add('c-m')
     def AcceptNew(event):
         global folder
-        log('entered function')
         name = event.app.current_buffer.document.current_line
         event.app.current_buffer.set_document(pt.document.Document())
         event.app.layout.focus(displayer)
         newPage(name)
         rerender(event)
 
+
     text = pt.document.Document(text = makeDirText(root))
     displayer = pt.buffer.Buffer(read_only = True, multiline = True, document = text)
     prompt = pt.buffer.Buffer(multiline = False)
 
     bottomText1 = pt.layout.controls.FormattedTextControl(
-            text = pt.HTML('<ansigreen>c-q -> exit, o -> open, h -> go to home dir, b -> go up a dir </ansigreen>'))
+            text = pt.HTML('<ansigreen>c-q -> exit, enter -> open, h -> go to home dir, b -> go up a dir </ansigreen>'))
     bottomText2 = pt.layout.controls.FormattedTextControl(
             text = pt.HTML('<ansigreen>n -> new dir, m -> make new note file </ansigreen>'))
     aboveText1 = pt.layout.controls.FormattedTextControl(
