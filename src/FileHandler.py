@@ -3,12 +3,14 @@ from datetime import datetime, date
 
 
 def today(divider = '.'):
+	"returns current date as string in DD.MM.YYYY format"
 	date = datetime.now()
 	datestr = str(date.day) + divider + str(date.month) + divider + str(date.year)
 	return datestr
 
 
 def properties(Title, Type, Date, Author):
+	"Template for Folder.properties. Type field is depracated."
 	data = {
 		"Title":	Title,
 		"Type" :	Type,
@@ -19,8 +21,22 @@ def properties(Title, Type, Date, Author):
 
 
 class Folder(object):
-	"""docstring for Folder"""
+	"""
+		Represents phisical folder on a computer with a .json file containing
+		metadata. It contains:
+			.parent - updirectory
+			.dir - path
+			.files - list of filenames
+			.folders - list of folders in folder #NOTE: Folder with names
+			ending with .assets are ignored
+	"""
 	def __init__(self, dir, MakeNew = False, properties = None, parent = None):
+		"""
+			dir - path to folder
+			MakeNew - Can create new folder
+			properties - dict with metadata
+			parent - folder updirectory
+		"""
 		super(Folder, self).__init__()
 
 		self.parent = parent
@@ -54,13 +70,14 @@ class Folder(object):
 		self.Scan()
 
 	def Scan(self):
+		"""Scan for files and folders"""
 		self.files = list()
 		self.folders = list()
 
 		for r, d, f in os.walk(self.dir):
 			for folder in d:
 				try:
-					if not folder == 'note.assets':
+					if not folder.endswith('.assets'):
 						self.folders.append(Folder(self.dir + '/' + folder + '/', parent = self))
 				except:
 					raise TypeError('Could not load folder : ' + folder)
@@ -76,12 +93,13 @@ class Folder(object):
 		self.folders.sort()
 
 	def __lt__(self, other):
+		"""For sorting the list of folders by date"""
 		d1, m1, y1 = [int(x) for x in self.properties['Date'].split('/')]
 		d2, m2, y2 = [int(x) for x in other.properties['Date'].split('/')]
 		return date(y1, m1, d1) < date(y2, m2, d2)
 
 def MakeTemplate(template, folder, extension = '.md'):
-
+	"""Substitute the fields in template and copy it to the target folder"""
 	templateDir = os.path.expanduser('~/PNO/templates/')
 	try:
 		templateFile = codecs.open(templateDir + template + extension, 'r', 'utf-8')

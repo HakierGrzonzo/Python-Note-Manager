@@ -12,7 +12,7 @@ TemplateDir = os.path.expanduser('~/PNO/templates')
 PNOkeywords = ['open', 'list', 'make', 'markdown', 'section', 'page', 'subsection', 'new', 'exit']
 
 class PNOCompleter(pt.completion.Completer):
-
+    """Completer for prompt"""
     def get_completions(self, document, complete_event):
         global currentFolder
         if not currentFolder == None:
@@ -21,11 +21,12 @@ class PNOCompleter(pt.completion.Completer):
             additionalKeys = list()
         word_before_cursor = document.get_word_before_cursor( WORD = True)
         matches = fuzzyfinder(word_before_cursor, [*PNOkeywords, *additionalKeys])
-        
+
         for m in matches:
             yield pt.completion.Completion(m, start_position = -len(word_before_cursor))
 
 def shortText(text, limit):
+        """shorten text to limit"""
         if len(text) > limit + 4 and limit > 4:
                 text = text[:limit] + '...'
         return text
@@ -50,7 +51,7 @@ def today():
         return datestr
 
 def DoNew(command):
-        """Syntax: new {type of folder} {title}"""
+        """Syntax: new {type of folder} {title}, creates new folder"""
         global currentFolder
         global NoteDir
 
@@ -66,11 +67,11 @@ def DoNew(command):
         if not len(command) >=  3:
                 print('Invalid syntax, use: new {type of folder} {title}')
 
-        else: 
+        else:
                 properties = fh.properties(command[2], command[1], today(), author)
 
                 if currentFolder == None:
-                        dir = NoteDir + path 
+                        dir = NoteDir + path
                 else:
                         dir = currentFolder.dir + '/' + path
 
@@ -83,8 +84,9 @@ def DoNew(command):
 
                 except Exception as e:
                         raise e
-                
+
 def DoOpen(command):
+        """opens folder"""
         global currentFolder
         global NoteDir
 
@@ -126,6 +128,7 @@ def DoOpen(command):
 
 
 def getPosition():
+        """Returns PNO path to currentFolder"""
         global currentFolder
         if currentFolder == None:
                 return None
@@ -142,6 +145,7 @@ def getPosition():
                 return folderList
 
 def ShellString():
+        """Returns the prompt text"""
         position = getPosition()
         if not position == None:
                 string = str()
@@ -152,6 +156,7 @@ def ShellString():
                 return ': '
 
 def DoList():
+        """Prints a list of currentFolder.files and currentFolder.folders"""
         global currentFolder
         didSth = False
         printed = list()
@@ -190,6 +195,7 @@ def DoList():
                 print('wow such empty')
 
 def DoMake(command):
+        """calls fh.MakeTemplate()"""
         global currentFolder
         try:
                 command = command[1].split(' ')
@@ -202,9 +208,10 @@ def DoMake(command):
 
 def main():
         global currentFolder
-        
+
         session = pt.PromptSession()
         while True:
+                """App loop"""
                 command = session.prompt( ShellString(), completer = PNOCompleter() )
                 if command == 'exit':
                         break
